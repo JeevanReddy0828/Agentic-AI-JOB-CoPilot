@@ -1,62 +1,128 @@
-# Agentic Job Application Copilot (Plan → Execute → Verify)
+# Agentic Job Application Copilot
 
-An agentic AI system that:
-- Plans a workflow (`create_action_plan`)
-- Executes each step with tool-calling + LLM reasoning
-- Tracks step status (simple state machine)
-- Produces grounded resume bullets, cover letter, interview pack, ATS score, and diffs
+An end-to-end **agentic AI system** that helps you tailor job applications using a **plan → execute → verify** workflow.
 
-## Features
-- `/extract` upload PDF/DOCX/TXT and extract text
-- `/run` agentic plan+execute run, persists artifacts per job
-- `/score` keyword coverage ATS scoring
-- `/diff` compare two runs
+The project consists of:
+- **Backend (FastAPI + OpenAI)**: Orchestrates agent planning, tool execution, grounding checks, and persistence.
+- **Frontend (Next.js + Tailwind)**: Minimal UI to upload resumes, paste job descriptions, run the agent, view results, compare runs, and track history.
 
-## Setup
+---
+
+## 📁 Recommended Repository Structure
+
+```
+agentic-job-copilot/
+│
+├── app/                      # FastAPI backend
+│   ├── agent.py               # Agent loop (plan → execute → state machine)
+│   ├── main.py                # FastAPI routes
+│   ├── tools.py               # Tool functions (planning, keyword extraction, grounding, web search)
+│   ├── ingest.py              # PDF/DOCX/TXT text extraction
+│   ├── scoring.py             # ATS scoring logic
+│   ├── diffs.py               # Diff utilities
+│   ├── storage.py             # SQLite persistence
+│   ├── schemas.py             # Pydantic request/response models
+│   └── prompts.py             # System + task prompts
+│
+├── copilot-ui/                # Next.js frontend
+│   ├── src/
+│   │   ├── app/               # App Router pages/layout
+│   │   ├── components/        # UI components (Results, Diff, History)
+│   │   └── lib/               # API client + local storage helpers
+│   ├── public/
+│   ├── package.json
+│   └── tailwind.config.ts
+│
+├── data/                      # Runtime data (SQLite DB, ignored by git)
+│
+├── .gitignore                 # Root gitignore (Python + Node)
+├── .env.example               # Environment variable template
+├── requirements.txt           # Backend dependencies
+└── README.md                  # This file
+```
+
+---
+
+## 🚀 Backend: FastAPI Agent
+
+### Features
+- **Agentic planning** via `create_action_plan()`
+- **Step-by-step execution** with status tracking
+- **Grounding verification** to prevent hallucinations
+- **ATS keyword extraction + scoring**
+- **Company research tool** (optional, via Tavily)
+- **Run versioning and diffs** stored in SQLite
+
+### Setup
 ```bash
 python -m venv .venv
-# Windows:
+# Windows
 .venv\Scripts\activate
-# mac/linux:
-# source .venv/bin/activate
+# macOS / Linux
+source .venv/bin/activate
 
-python.exe -m pip install --upgrade pip
 pip install -r requirements.txt
-cp .env.example .env   # then set OPENAI_API_KEY (and optional TAVILY_API_KEY)
+cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-## Quick Test
-### Extract resume text from PDF
+Visit: http://127.0.0.1:8000/docs
+
+---
+
+## 🎨 Frontend: Next.js UI
+
+### Features
+- Upload resume (PDF / DOCX / TXT)
+- Paste job description
+- Run agent and view outputs
+- Local run history (browser storage)
+- Diff two runs (resume bullets + cover letter)
+
+### Setup
 ```bash
-curl -X POST "http://127.0.0.1:8000/extract" -F "file=@resume.pdf"
+cd copilot-ui
+npm install
+npm run dev
 ```
 
-### Run the agent
-```bash
-curl -X POST "http://127.0.0.1:8000/run" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "job_url":"https://example.com/jd",
-    "company_name":"Visa",
-    "role_title":"Software Engineer",
-    "job_text":"PASTE JOB DESCRIPTION TEXT",
-    "resume_text":"PASTE RESUME TEXT"
-  }'
+Optional `.env.local`:
+```env
+NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000
 ```
 
-### Score only
-```bash
-curl -X POST "http://127.0.0.1:8000/score" \
-  -H "Content-Type: application/json" \
-  -d '{"job_text":"PASTE JD","resume_text":"PASTE RESUME"}'
-```
+Visit: http://localhost:3000
 
-### Diff two runs
-```bash
-curl "http://127.0.0.1:8000/diff?run_a=RUN_ID_1&run_b=RUN_ID_2"
-```
+---
 
-## Notes
-- If you don't set `TAVILY_API_KEY`, web research will return an error message and the agent will proceed without it.
-- This project is intentionally minimal; you can add a UI later (Next.js).
+## 🧠 Typical Workflow
+
+1. Start backend (`uvicorn ...`)
+2. Start frontend (`npm run dev`)
+3. Upload resume or paste resume text
+4. Paste job description
+5. Run copilot
+6. Review:
+   - Tailored resume bullets
+   - Cover letter
+   - Interview pack
+   - Execution log (agent steps)
+7. Run again → compare with diff
+
+---
+
+## ⚠️ Notes
+- First run may take ~30–90 seconds due to multiple LLM calls
+- Ensure `OPENAI_API_KEY` is set in `.env`
+
+---
+
+## 📌 Future Extensions
+- Auth + user accounts
+- Persistent run history via backend API
+- Resume export (PDF/DOCX)
+- Multi-agent decomposition
+- Recruiter-specific templates
+
+---
+
