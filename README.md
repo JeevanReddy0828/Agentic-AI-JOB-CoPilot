@@ -8,7 +8,7 @@ The project consists of:
 
 ---
 
-## 📁 Recommended Repository Structure
+## 📁 Repository Structure
 
 ```
 agentic-job-copilot/
